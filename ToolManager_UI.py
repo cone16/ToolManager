@@ -36,9 +36,10 @@ class ToolManagerUi():
       self.tY = ToolManager.ToolManager(
          self.TOOLMODELFILE, self.ASMOD).getToolData()[7]
 
-      self.mainWindow()
+      self.removeDoubles()
+      self.defineMainWindow()
 
-   def mainWindow(self):
+   def defineMainWindow(self):
 
       self.window = TK.Tk()
       self.window.geometry("900x350")
@@ -74,6 +75,14 @@ class ToolManagerUi():
       self.tree.column("# 8", anchor='w')
       self.tree.heading("# 8", text="ToolShiftY")
 
+      # insert a Scrollbars
+      vbs = ttk.Scrollbar(self.window, orient="vertical", command=self.tree.yview)
+      vbs.pack(side='right', fill='y')
+      hbs = ttk.Scrollbar(self.window, orient="horizontal", command=self.tree.xview)
+      hbs.pack(side='bottom', fill='x')
+      self.tree.configure(yscrollcommand=vbs.set)
+      self.tree.configure(xscrollcommand=hbs.set)
+
       # Insert the data in Treeview widget
       self.refreshTreeViewData()
       
@@ -87,6 +96,7 @@ class ToolManagerUi():
       GroupLabel.grid(row=0, column=1, sticky=W)
       self.GroupNr = Entry(self.EditWindow, width = 20)
       self.GroupNr.grid(row=0, column=2)
+      self.GroupNr.config(state=NORMAL)
 
       NameLabel = TK.Label(self.EditWindow, text="Tool Description :")
       NameLabel.grid(row=1, column=1, sticky=W)
@@ -144,16 +154,9 @@ class ToolManagerUi():
       else:
          return ToolManager.ToolManager.writeToFile(self, finalUISaveFile), print("OK!")
 
-   def onRelease(self, event):
-      self.GroupNr.delete(0, END)
-      self.Name.delete(0, END)
-      self.ID.delete(0, END)
-      self.Offset.delete(0 ,END)
-      self.ToolNoseRadius.delete(0 ,END)
-      self.ToolshiftY.delete(0, END)
-      self.IsMillingTool.deselect()
-      self.IsCCW.deselect()
 
+   def onRelease(self, event):
+      self.deleteEditWindowValues()
       item = self.tree.selection()
       for i in item: 
          self.GroupNr.insert(END, str(self.tree.item(i, "values")[0]))
@@ -162,6 +165,7 @@ class ToolManagerUi():
          self.Name.insert(END, str(self.tree.item(i, "values")[3]))
          self.ToolNoseRadius.insert(END, str(self.tree.item(i, "values")[4]))
          self.ToolshiftY.insert(END, str(self.tree.item(i, "values")[7]))
+
          if self.tree.item(i, "values")[5] == "true":
             self.IsMillingTool.select()
          else:
@@ -174,18 +178,26 @@ class ToolManagerUi():
 
 
    def getDataFromEditWindow(self):
-      getID = self.ID.get()
-      getName = self.Name.get()
-      getOffs = self.Offset.get()
-      getToolNoseRadius = self.ToolNoseRadius.get()
-      ToolManager.ToolManager.saveToList(self, str(getID), str(getName), str(getOffs), str(getToolNoseRadius))
-      
+      entry_group_nr = self.GroupNr.get()
+      entry_id = self.ID.get()
+      entry_name = self.Name.get()
+      entry_offs = self.Offset.get()
+      entry_tool_nose_radius = self.ToolNoseRadius.get()
+      ToolManager.ToolManager.saveToList(self,
+                                         entry_group_nr, 
+                                         entry_id, 
+                                         entry_name, 
+                                         entry_offs, 
+                                         entry_tool_nose_radius)
+      self.refreshTreeViewData()
       #funzt nicht, muss angeblich mit durch iterieren funktionieren.
       #self.tree.delete(*self.tree.get_children)
 
+
    def refreshTreeViewData(self):
-      print("in rTVD")
+      self.deleteAllTreeValues()
       length = len(self.tID)
+      i = -1
       for i in range(length):
          self.tree.insert('', 'end', text="1", values=(self.groupNumber[i],
                                                     self.tID[i],
@@ -194,11 +206,35 @@ class ToolManagerUi():
                                                     self.tNoseRadius[i],
                                                     self.tIsRotary[i],
                                                     self.tCCW[i],
-                                                    self.tY[i]))
+                                                    self.tY[i]))     
       self.tree.bind('<ButtonRelease-1>', self.onRelease)
       self.tree.pack(expand=True, fill='y' )
 
+   def deleteEditWindowValues(self):
+      self.GroupNr.delete(0, END)
+      self.Name.delete(0, END)
+      self.ID.delete(0, END)
+      self.Offset.delete(0 ,END)
+      self.ToolNoseRadius.delete(0 ,END)
+      self.ToolshiftY.delete(0, END)
+      self.IsMillingTool.deselect()
+      self.IsCCW.deselect()
+   
+   def deleteAllTreeValues(self):
+      for item in self.tree.get_children():
+         self.tree.delete(item) 
+      return
 
+   def removeDoubles(self):
+      #remove duplicates this is a workaround. Don't know, why python import the list twice...
+      count = len(self.tID)/2
+      for item in self.tID:
+         self.tID.pop()
+         count -= 1
+         if count <= 0:
+            break
+         else:
+            continue
 
    def closeAll(self):
       self.window.quit()

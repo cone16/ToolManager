@@ -136,23 +136,23 @@ class ToolManager():
         print("converting accomplished.")
         return 0
 
-    def saveToList(self, ID, Name, Offset, ToolNoseRadius):
+    def saveToList(self, Group, ID, Name, Offset, ToolNoseRadius):
         # When someone hit the Save Button on the Edit Window,
         # write the new information to the List
-        length = len(self.tID)
+        length = len(self.groupNumber)
+        print(str(Group))
+        for entry in Group:
+            print(entry)
         for count in range(length):
-            if str(count).find(ID):
-                print(length)
+            if str(count).zfill(4) == str(Group):
+                self.groupNumber[count] = Group
                 self.tID[count] = ID
                 self.tName[count] = Name
                 self.tOffsNumber[count] = Offset
                 self.tNoseRadius[count] = ToolNoseRadius
-
-                #reset the threeview
-                return
+                break
             else:
-                print("nope")
-        pass
+                continue
 
 if __name__ == "__main__":
     ToolManager("ToolModel.TMD", "No")
